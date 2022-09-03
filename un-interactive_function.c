@@ -1,12 +1,12 @@
 #include "shell.h"
 
 /**
- * non_interactive - handles non_interactive mode
+ * un-interactive -> handles non_interactive mode
  *
  * Return: void
  */
 
-void non_interactive(void)
+void un-interactive(void)
 {
 	char **current_command = NULL;
 	int i, type_command = 0;
@@ -28,7 +28,7 @@ void non_interactive(void)
 					break;
 				}
 				type_command = parse_command(current_command[0]);
-				initializer(current_command, type_command);
+				init(current_command, type_command);
 				free(current_command);
 			}
 			free(commands);
