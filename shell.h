@@ -41,4 +41,5 @@ extern int status;
 void fun(char **);
 void quit(char **);
 
-#endif /*SHELL_H*
+#endif /*SHELL_H*/
+

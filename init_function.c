@@ -1,14 +1,14 @@
 #include "shell.h"
 
 /**
- * initializer - starts executing everything
+ * init -> starts executing all programs
  * @current_command: try to check current token
  * @type_command: parse token
  *
  * Return: void function
  */
 
-void initializer(char **current_command, int type_command)
+void init(char **current_command, int type_command)
 {
 	pid_t PID;
 
