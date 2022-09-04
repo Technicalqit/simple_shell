@@ -41,5 +41,12 @@ extern int status;
 void fun(char **);
 void quit(char **);
 
+/*helpers*/
+void print(char *, int);
+char **tokenizer(char *, char *);
+void remove_newline(char *);
+int _strlen(char *);
+void _strcpy(char *, char *);
+
 #endif /*SHELL_H*/
 
