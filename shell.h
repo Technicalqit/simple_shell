@@ -48,5 +48,9 @@ void remove_newline(char *);
 int _strlen(char *);
 void _strcpy(char *, char *);
 
+/*main*/
+extern void un_interactive(void);
+extern void init(char **current_command, int type_command);
+
 #endif /*SHELL_H*/
 
