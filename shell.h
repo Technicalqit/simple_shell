@@ -48,6 +48,13 @@ void remove_newline(char *);
 int _strlen(char *);
 void _strcpy(char *, char *);
 
+/*helpers2*/
+int _strcmp(char *, char *);
+char *_strcat(char *, char *);
+int _strspn(char *, char *);
+int _strcspn(char *, char *);
+char *_strchr(char *, char);
+
 /*main*/
 extern void un_interactive(void);
 extern void init(char **current_command, int type_command);
