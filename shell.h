@@ -61,11 +61,19 @@ void *_realloc(void *ptr, unsigned int old_size, unsigned int new_size);
 void ctrl_c_handler(int);
 void remove_comment(char *);
 
+/*utils*/
+int parse_command(char *);
+void execute_command(char **, int);
+char *check_path(char *);
+void (*get_func(char *))(char **);
+char *_getenv(char *)
+
 
 
 /*main*/
 extern void un_interactive(void);
 extern void init(char **current_command, int type_command);
+
 
 #endif /*SHELL_H*/
 
