@@ -54,6 +54,14 @@ char *_strcat(char *, char *);
 int _strspn(char *, char *);
 int _strcspn(char *, char *);
 char *_strchr(char *, char);
+/*helper3*/
+char *_strtok_r(char *, char *, char **);
+int _atoi(char *);
+void *_realloc(void *ptr, unsigned int old_size, unsigned int new_size);
+void ctrl_c_handler(int);
+void remove_comment(char *);
+
+
 
 /*main*/
 extern void un_interactive(void);
