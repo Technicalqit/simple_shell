@@ -1,95 +1,115 @@
 #include "shell.h"
 
 /**
-* tokenizer -> tokenizes input and stores it into an array
-*@input: input to be parsed
-*@deux: delimiter to be used, needs to be one character string
-*
-*Return: array of tokens
-*/
-char **tokenizer(char *input, char *deux)
+ * _myhistory - displays the history list, one command by line, preceded
+ *              with line numbers, starting at 0.
+ * @info: Structure containing potential arguments. Used to maintain
+ *        constant function prototype.
+ *  Return: Always 0
+ */
+int _myhistory(info_t *info)
 {
-	int num_delim = 0;
-	char **av = NULL;
-	char *token = NULL;
-	char *save_ptr = NULL;
+	print_list(info->history);
+	return (0);
+}
 
-	token = _strtok_r(input, deux, &save_ptr);
+/**
+ * unset_alias - sets alias to string
+ * @info: parameter struct
+ * @str: the string alias
+ *
+ * Return: Always 0 on success, 1 on error
+ */
+int unset_alias(info_t *info, char *str)
+{
+	char *p, c;
+	int ret;
 
-	while (token != NULL)
+	p = _strchr(str, '=');
+	if (!p)
+		return (1);
+	c = *p;
+	*p = 0;
+	ret = delete_node_at_index(&(info->alias),
+		get_node_index(info->alias, node_starts_with(info->alias, str, -1)));
+	*p = c;
+	return (ret);
+}
+
+/**
+ * set_alias - sets alias to string
+ * @info: parameter struct
+ * @str: the string alias
+ *
+ * Return: Always 0 on success, 1 on error
+ */
+int set_alias(info_t *info, char *str)
+{
+	char *p;
+
+	p = _strchr(str, '=');
+	if (!p)
+		return (1);
+	if (!*++p)
+		return (unset_alias(info, str));
+
+	unset_alias(info, str);
+	return (add_node_end(&(info->alias), str, 0) == NULL);
+}
+
+/**
+ * print_alias - prints an alias string
+ * @node: the alias node
+ *
+ * Return: Always 0 on success, 1 on error
+ */
+int print_alias(list_t *node)
+{
+	char *p = NULL, *a = NULL;
+
+	if (node)
 	{
+		p = _strchr(node->str, '=');
+		for (a = node->str; a <= p; a++)
+			_putchar(*a);
+		_putchar('\'');
+		_puts(p + 1);
+		_puts("'\n");
+		return (0);
+	}
+	return (1);
+}
 
-	av = _realloc(av, sizeof(*av) * num_delim, sizeof(*av) * (num_delim + 1));
-	av[num_delim] = token;
-	token = _strtok_r(NULL, deux, &save_ptr);
-	num_delim++;
+/**
+ * _myalias - mimics the alias builtin (man alias)
+ * @info: Structure containing potential arguments. Used to maintain
+ *          constant function prototype.
+ *  Return: Always 0
+ */
+int _myalias(info_t *info)
+{
+	int i = 0;
+	char *p = NULL;
+	list_t *node = NULL;
+
+	if (info->argc == 1)
+	{
+		node = info->alias;
+		while (node)
+		{
+			print_alias(node);
+			node = node->next;
+		}
+		return (0);
+	}
+	for (i = 1; info->argv[i]; i++)
+	{
+		p = _strchr(info->argv[i], '=');
+		if (p)
+			set_alias(info, info->argv[i]);
+		else
+			print_alias(node_starts_with(info->alias, info->argv[i], '='));
 	}
 
-	av = _realloc(av, sizeof(*av) * num_delim, sizeof(*av) * (num_delim + 1));
-	av[num_delim] = NULL;
-
-	return (av);
-}
-/**
-*print - prints a string to stdout
-*@string: string to be printed
-*@stream: stream to print out to
-*Return: void, return nothing
-*/
-void print(char *string, int stream)
-{
-	int i = 0;
-
-	for (; string[i] != '\0'; i++)
-	write(stream, &string[i], 1);
-}
-/**
-*remove_newline - removes new line from a string
-*@str: string to be used
-*
-*
-*Return: void
-*/
-void remove_newline(char *str)
-{
-	int i = 0;
-
-	while (str[i] != '\0')
-	{
-	if (str[i] == '\n')
-	break;
-	i++;
-	}
-	str[i] = '\0';
-}
-/**
-*_strcpy - copies a string to another buffer
-*@source: source to copy from
-*@dest: destination to copy to
-*
-* Return: void
-*/
-void _strcpy(char *source, char *dest)
-{
-	int i = 0;
-
-	for (; source[i] != '\0'; i++)
-	dest[i] = source[i];
-	dest[i] = '\0';
-}
-/**
-*_strlen - counts string length
-*@string: string to be counted
-*
-* Return: length of the string
-*/
-int _strlen(char *string)
-{
-	int len = 0;
-
-	if (string == NULL)
-	return (len);
-	for (; string[len] != '\0'; len++)
-		;
-	return (len);
+	return (0);
 }
