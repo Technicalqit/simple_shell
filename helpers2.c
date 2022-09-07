@@ -1,140 +1,93 @@
 #include "shell.h"
 
-
 /**
- *_strtok_r - tokenizes a string
- *@string: string to be tokenized
- *@delim: delimiter to be used to tokenize the string
- *@save_ptr: pointer to be used to keep track of the next token
- *
- *Return: The next available token
+ * _myenv - prints the current environment
+ * @info: Structure containing potential arguments. Used to maintain
+ *          constant function prototype.
+ * Return: Always 0
  */
-char *_strtok_r(char *string, char *delim, char **save_ptr)
+int _myenv(info_t *info)
 {
-	char *finish;
-
-	if (string == NULL)
-		string = *save_ptr;
-
-	if (*string == '\0')
-	{
-		*save_ptr = string;
-		return (NULL);
-	}
-
-	string += _strspn(string, delim);
-	if (*string == '\0')
-	{
-		*save_ptr = string;
-		return (NULL);
-	}
-
-	finish = string + _strcspn(string, delim);
-	if (*finish == '\0')
-	{
-		*save_ptr = finish;
-		return (string);
-	}
-
-	*finish = '\0';
-	*save_ptr = finish + 1;
-	return (string);
+	print_list_str(info->env);
+	return (0);
 }
 
 /**
- * _atoi - changes a string to an integer
- * @s: the string to be changed
+ * _getenv - gets the value of an environ variable
+ * @info: Structure containing potential arguments. Used to maintain
+ * @name: env var name
  *
- * Return: the converted int
+ * Return: the value
  */
-int _atoi(char *s)
+char *_getenv(info_t *info, const char *name)
 {
-	unsigned int n = 0;
+	list_t *node = info->env;
+	char *p;
 
-	do {
-		if (*s == '-')
-			return (-1);
-		else if ((*s < '0' || *s > '9') && *s != '\0')
-			return (-1);
-		else if (*s >= '0'  && *s <= '9')
-			n = (n * 10) + (*s - '0');
-		else if (n > 0)
-			break;
-	} while (*s++);
-	return (n);
+	while (node)
+	{
+		p = starts_with(node->str, name);
+		if (p && *p)
+			return (p);
+		node = node->next;
+	}
+	return (NULL);
 }
 
 /**
- * _realloc - reallocates a memory block
- * @ptr: pointer to the memory previously allocated with a call to malloc
- * @old_size: size of ptr
- * @new_size: size of the new memory to be allocated
- *
- * Return: pointer to the address of the new memory block
+ * _mysetenv - Initialize a new environment variable,
+ *             or modify an existing one
+ * @info: Structure containing potential arguments. Used to maintain
+ *        constant function prototype.
+ *  Return: Always 0
  */
-void *_realloc(void *ptr, unsigned int old_size, unsigned int new_size)
+int _mysetenv(info_t *info)
 {
-	void *temp_block;
-	unsigned int i;
-
-	if (ptr == NULL)
+	if (info->argc != 3)
 	{
-		temp_block = malloc(new_size);
-		return (temp_block);
+		_eputs("Incorrect number of arguements\n");
+		return (1);
 	}
-	else if (new_size == old_size)
-		return (ptr);
-	else if (new_size == 0 && ptr != NULL)
-	{
-		free(ptr);
-		return (NULL);
-	}
-	else
-	{
-		temp_block = malloc(new_size);
-		if (temp_block != NULL)
-		{
-			for (i = 0; i < min(old_size, new_size); i++)
-				*((char *)temp_block + i) = *((char *)ptr + i);
-			free(ptr);
-			return (temp_block);
-		}
-		else
-			return (NULL);
-
-	}
+	if (_setenv(info, info->argv[1], info->argv[2]))
+		return (0);
+	return (1);
 }
 
 /**
- * ctrl_c_handler - handles the signal raised by CTRL-C
- * @signum: signal number
- *
- * Return: void
+ * _myunsetenv - Remove an environment variable
+ * @info: Structure containing potential arguments. Used to maintain
+ *        constant function prototype.
+ *  Return: Always 0
  */
-void ctrl_c_handler(int signum)
+int _myunsetenv(info_t *info)
 {
-	if (signum == SIGINT)
-		print("\n($) ", STDIN_FILENO);
+	int i;
+
+	if (info->argc == 1)
+	{
+		_eputs("Too few arguements.\n");
+		return (1);
+	}
+	for (i = 1; i <= info->argc; i++)
+		_unsetenv(info, info->argv[i]);
+
+	return (0);
 }
 
 /**
- * remove_comment - removes/ignores everything after a '#' char
- * @input: input to be used
- *
- * Return: void
+ * populate_env_list - populates env linked list
+ * @info: Structure containing potential arguments. Used to maintain
+ *          constant function prototype.
+ * Return: Always 0
  */
-void remove_comment(char *input)
+int populate_env_list(info_t *info)
 {
-	int i = 0;
+	list_t *node = NULL;
+	size_t i;
 
-	if (input[i] == '#')
-		input[i] = '\0';
-	while (input[i] != '\0')
-	{
-		if (input[i] == '#' && input[i - 1] == ' ')
-			break;
-		i++;
-	}
-	input[i] = '\0';
+	for (i = 0; environ[i]; i++)
+		add_node_end(&node, environ[i], 0);
+	info->env = node;
+	return (0);
 }
 
