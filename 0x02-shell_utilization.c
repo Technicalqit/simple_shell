@@ -1,97 +1,341 @@
 #include "shell.h"
 
-/**
- * _myexit - exits the shell
- * @info: Structure containing potential arguments. Used to maintain
- *          constant function prototype.
- *  Return: exits with a given exit status
- *         (0) if info.argv[0] != "exit"
- */
-int _myexit(info_t *info)
-{
-	int exitcheck;
 
-	if (info->argv[1])  /* If there is an exit arguement */
+
+/**
+
+ * Auth: Emma Udeji
+
+ * 		 Pericles Adjovi
+
+ *
+
+ * Description:
+
+ * the extended functions for main.c
+
+ */
+
+
+
+
+
+/** parse_command - determines the type of the command
+
+ * @command: command to be parsed
+
+ *
+
+ * Return: constant representing the type of the command
+
+ * Description -
+
+ * 		 EXTERNAL_COMMAND (1) represents commands like /bin/ls
+
+ *		 INTERNAL_COMMAND (2) represents commands like exit, env
+
+ *		 PATH_COMMAND (3) represents commands found in the PATH like ls
+
+ *		 INVALID_COMMAND (-1) represents invalid commands
+
+ */
+
+
+
+int parse_command(char *command)
+
+{
+
+	int i;
+
+	char *internal_command[] = {"env", "exit", NULL};
+
+	char *path = NULL;
+
+
+
+	for (i = 0; command[i] != '\0'; i++)
+
 	{
-		exitcheck = _erratoi(info->argv[1]);
-		if (exitcheck == -1)
-		{
-			info->status = 2;
-			print_error(info, "Illegal number: ");
-			_eputs(info->argv[1]);
-			_eputchar('\n');
-			return (1);
-		}
-		info->err_num = _erratoi(info->argv[1]);
-		return (-2);
+
+		if (command[i] == '/')
+
+			return (EXTERNAL_COMMAND);
+
 	}
-	info->err_num = -1;
-	return (-2);
+
+	for (i = 0; internal_command[i] != NULL; i++)
+
+	{
+
+		if (_strcmp(command, internal_command[i]) == 0)
+
+			return (INTERNAL_COMMAND);
+
+	}
+
+	/* @check_path - checks if a command is found in the PATH */
+
+	path = check_path(command);
+
+	if (path != NULL)
+
+	{
+
+		free(path);
+
+		return (PATH_COMMAND);
+
+	}
+
+
+
+	return (INVALID_COMMAND);
+
 }
 
-/**
- * _mycd - changes the current directory of the process
- * @info: Structure containing potential arguments. Used to maintain
- *          constant function prototype.
- *  Return: Always 0
- */
-int _mycd(info_t *info)
-{
-	char *s, *dir, buffer[1024];
-	int chdir_ret;
 
-	s = getcwd(buffer, 1024);
-	if (!s)
-		_puts("TODO: >>getcwd failure emsg here<<\n");
-	if (!info->argv[1])
+
+/**
+
+ * execute_command - executes a command based on it's type
+
+ * @tokenized_command: tokenized form of the command (ls -l == {ls, -l, NULL})
+
+ * @command_type: type of the command
+
+ *
+
+ * Return: void
+
+ */
+
+void execute_command(char **tokenized_command, int command_type)
+
+{
+
+	void (*func)(char **command);
+
+
+
+	if (command_type == EXTERNAL_COMMAND)
+
 	{
-		dir = _getenv(info, "HOME=");
-		if (!dir)
-			chdir_ret = /* TODO: what should this be? */
-				chdir((dir = _getenv(info, "PWD=")) ? dir : "/");
-		else
-			chdir_ret = chdir(dir);
-	}
-	else if (_strcmp(info->argv[1], "-") == 0)
-	{
-		if (!_getenv(info, "OLDPWD="))
+
+		if (execve(tokenized_command[0], tokenized_command, NULL) == -1)
+
 		{
-			_puts(s);
-			_putchar('\n');
-			return (1);
+
+			perror(_getenv("PWD"));
+
+			exit(2);
+
 		}
-		_puts(_getenv(info, "OLDPWD=")), _putchar('\n');
-		chdir_ret = /* TODO: what should this be? */
-			chdir((dir = _getenv(info, "OLDPWD=")) ? dir : "/");
+
 	}
-	else
-		chdir_ret = chdir(info->argv[1]);
-	if (chdir_ret == -1)
+
+	if (command_type == PATH_COMMAND)
+
 	{
-		print_error(info, "can't cd to ");
-		_eputs(info->argv[1]), _eputchar('\n');
+
+		if (execve(check_path(tokenized_command[0]), tokenized_command, NULL) == -1)
+
+		{
+
+			perror(_getenv("PWD"));
+
+			exit(2);
+
+		}
+
 	}
-	else
+
+	if (command_type == INTERNAL_COMMAND)
+
 	{
-		_setenv(info, "OLDPWD", _getenv(info, "PWD="));
-		_setenv(info, "PWD", getcwd(buffer, 1024));
+
+		func = get_func(tokenized_command[0]);
+
+		func(tokenized_command);
+
 	}
-	return (0);
+
+	if (command_type == INVALID_COMMAND)
+
+	{
+
+		print(shell_name, STDERR_FILENO);
+
+		print(": 1: ", STDERR_FILENO);
+
+		print(tokenized_command[0], STDERR_FILENO);
+
+		print(": not found\n", STDERR_FILENO);
+
+		status = 127;
+
+	}
+
 }
 
-/**
- * _myhelp - changes the current directory of the process
- * @info: Structure containing potential arguments. Used to maintain
- *          constant function prototype.
- *  Return: Always 0
- */
-int _myhelp(info_t *info)
-{
-	char **arg_array;
 
-	arg_array = info->argv;
-	_puts("help call works. Function not yet implemented \n");
-	if (0)
-		_puts(*arg_array); /* temp att_unused workaround */
-	return (0);
+
+/**
+
+ * check_path - checks if a command is found in the PATH
+
+ * @command: command to be used
+
+ *
+
+ * Return: path where the command is found in, NULL if not found
+
+ */
+
+char *check_path(char *command)
+
+{
+
+	char **path_array = NULL;
+
+	char *temp, *temp2, *path_cpy;
+
+	char *path = _getenv("PATH");
+
+	int i;
+
+
+
+	if (path == NULL || _strlen(path) == 0)
+
+		return (NULL);
+
+	path_cpy = malloc(sizeof(*path_cpy) * (_strlen(path) + 1));
+
+	_strcpy(path, path_cpy);
+
+	path_array = tokenizer(path_cpy, ":");
+
+	for (i = 0; path_array[i] != NULL; i++)
+
+	{
+
+		temp2 = _strcat(path_array[i], "/");
+
+		temp = _strcat(temp2, command);
+
+		if (access(temp, F_OK) == 0)
+
+		{
+
+			free(temp2);
+
+			free(path_array);
+
+			free(path_cpy);
+
+			return (temp);
+
+		}
+
+		free(temp);
+
+		free(temp2);
+
+	}
+
+	free(path_cpy);
+
+	free(path_array);
+
+	return (NULL);
+
+}
+
+
+
+/**
+
+ * get_func - retrieves a function based on the command given and a mapping
+
+ * @command: string to check against the mapping
+
+ *
+
+ * Return: pointer to the proper function, or null on fail
+
+ */
+
+void (*get_func(char *command))(char **)
+
+{
+
+	int i;
+
+	function_map mapping[] = {
+
+		{"env", env}, {"exit", quit}
+
+	};
+
+
+
+	for (i = 0; i < 2; i++)
+
+	{
+
+		if (_strcmp(command, mapping[i].command_name) == 0)
+
+			return (mapping[i].func);
+
+	}
+
+	return (NULL);
+
+}
+
+
+
+/**
+
+ * _getenv - gets the value of an environment variable
+
+ * @name: name of the environment variable
+
+ *
+
+ * Return: the value of the variable as a string
+
+ */
+
+char *_getenv(char *name)
+
+{
+
+	char **my_environ;
+
+	char *pair_ptr;
+
+	char *name_cpy;
+
+
+
+	for (my_environ = environ; *my_environ != NULL; my_environ++)
+
+	{
+
+		for (pair_ptr = *my_environ, name_cpy = name;
+
+		     *pair_ptr == *name_cpy; pair_ptr++, name_cpy++)
+
+		{
+
+			if (*pair_ptr == '=')
+
+				break;
+	}
+		if ((*pair_ptr == '=') && (*name_cpy == '\0'))
+		return (pair_ptr + 1);
+	}
+	return (NULL);
 }
