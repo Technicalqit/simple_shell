@@ -1,28 +1,85 @@
 #include "shell.h"
 
 /**
- * init -> starts executing all programs
- * @current_command: try to check current token
- * @type_command: parse token
+ *_eputs - prints an input string
+ * @str: the string to be printed
  *
- * Return: void function
+ * Return: Nothing
  */
-
-void init(char **current_command, int type_command)
+void _eputs(char *str)
 {
-	pid_t PID;
+	int i = 0;
 
-	if (type_command == EXTERNAL_COMMAND || type_command == PATH_COMMAND)
+	if (!str)
+		return;
+	while (str[i] != '\0')
 	{
-		PID = fork();
-		if (PID == 0)
-			execute_command(current_command, type_command);
-		else
-		{
-			waitpid(PID, &status, 0);
-			status >>= 8;
-		}
+		_eputchar(str[i]);
+		i++;
 	}
-	else
-		execute_command(current_command, type_command);
+}
+
+/**
+ * _eputchar - writes the character c to stderr
+ * @c: The character to print
+ *
+ * Return: On success 1.
+ * On error, -1 is returned, and errno is set appropriately.
+ */
+int _eputchar(char c)
+{
+	static int i;
+	static char buf[WRITE_BUF_SIZE];
+
+	if (c == BUF_FLUSH || i >= WRITE_BUF_SIZE)
+	{
+		write(2, buf, i);
+		i = 0;
+	}
+	if (c != BUF_FLUSH)
+		buf[i++] = c;
+	return (1);
+}
+
+/**
+ * _putfd - writes the character c to given fd
+ * @c: The character to print
+ * @fd: The filedescriptor to write to
+ *
+ * Return: On success 1.
+ * On error, -1 is returned, and errno is set appropriately.
+ */
+int _putfd(char c, int fd)
+{
+	static int i;
+	static char buf[WRITE_BUF_SIZE];
+
+	if (c == BUF_FLUSH || i >= WRITE_BUF_SIZE)
+	{
+		write(fd, buf, i);
+		i = 0;
+	}
+	if (c != BUF_FLUSH)
+		buf[i++] = c;
+	return (1);
+}
+
+/**
+ *_putsfd - prints an input string
+ * @str: the string to be printed
+ * @fd: the filedescriptor to write to
+ *
+ * Return: the number of chars put
+ */
+int _putsfd(char *str, int fd)
+{
+	int i = 0;
+
+	if (!str)
+		return (0);
+	while (*str)
+	{
+		i += _putfd(*str++, fd);
+	}
+	return (i);
 }
