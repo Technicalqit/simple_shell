@@ -1,97 +1,75 @@
+
 #include "shell.h"
-/**
-*_strcmp - compare two strings
-*@first: first string to be compared
-*@second: second string to be compared
-*
-* Return: difference of the two strings
-*/
-int _strcmp(char *first, char *second)
-{
-	int i = 0;
 
-	while (first[i] != '\0')
-	{
-	if (first[i] != second[i])
-	break;
-	i++;
-	}
-	return (first[i] - second[i]);
+/**
+ * interactive - returns true if shell is interactive mode
+ * @info: struct address
+ *
+ * Return: 1 if interactive mode, 0 otherwise
+ */
+int interactive(info_t *info)
+{
+	return (isatty(STDIN_FILENO) && info->readfd <= 2);
 }
-/**
-*_strcat - concatenates two strings
-*@destination: string to be concatenated to
-*@source:  string to concatenate
-*
-* Return: address of the new string
-*/
-char *_strcat(char *destination, char *source)
-{
-	char *new_string =  NULL;
-	int len_dest = _strlen(destination);
-	int len_source = _strlen(source);
 
-	new_string = malloc(sizeof(*new_string) * (len_dest + len_source + 1));
-	_strcpy(destination, new_string);
-	_strcpy(source, new_string + len_dest);
-	new_string[len_dest + len_source] = '\0';
-	return (new_string);
+/**
+ * is_delim - checks if character is a delimeter
+ * @c: the char to check
+ * @delim: the delimeter string
+ * Return: 1 if true, 0 if false
+ */
+int is_delim(char c, char *delim)
+{
+	while (*delim)
+		if (*delim++ == c)
+			return (1);
+	return (0);
 }
-/**
-*_strspn - gets the length of a prefix substring
-*@str1: string to be searched
-*@str2: string to be used
-*
-*Return: number of bytes in the initial segment of 5 which are part of accept
-*/
-int _strspn(char *str1, char *str2)
-{
-	int i = 0;
-	int match = 0;
 
-	while (str1[i] != '\0')
-	{
-	if (_strchr(str2, str1[i]) == NULL)
-	break;
-	match++;
-	i++;
-	}
-	return (match);
-}
 /**
-*_strcspn - computes segment of str1 which consists of characters not in str2
-*@str1: string to be searched
-*@str2: string to be used
-*
-*Return: index at which a char in str1 exists in str2
-*/
-int _strcspn(char *str1, char *str2)
-{
-	int len = 0, i;
+ *_isalpha - checks for alphabetic character
+ *@c: The character to input
+ *Return: 1 if c is alphabetic, 0 otherwise
+ */
 
-	for (i = 0; str1[i] != '\0'; i++)
-	{
-	if (_strchr(str2, str1[i]) != NULL)
-		break;
-	len++;
-	}
-	return (len);
-}
-/**
-*_strchr - locates a char in a string
-*@s: string to be searched
-*@c: char to be checked
-*
-*Return: pointer to the first occurence of c in s
-*/
-char *_strchr(char *s, char c)
+int _isalpha(int c)
 {
-	int i = 0;
-
-	for (; s[i] != c && s[i] != '\0'; i++)
-		;
-	if (s[i] == c)
-	return (s + i);
+	if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'))
+		return (1);
 	else
-		return (NULL);
+		return (0);
+}
+
+/**
+ *_atoi - converts a string to an integer
+ *@s: the string to be converted
+ *Return: 0 if no numbers in string, converted number otherwise
+ */
+
+int _atoi(char *s)
+{
+	int i, sign = 1, flag = 0, output;
+	unsigned int result = 0;
+
+	for (i = 0;  s[i] != '\0' && flag != 2; i++)
+	{
+		if (s[i] == '-')
+			sign *= -1;
+
+		if (s[i] >= '0' && s[i] <= '9')
+		{
+			flag = 1;
+			result *= 10;
+			result += (s[i] - '0');
+		}
+		else if (flag == 1)
+			flag = 2;
+	}
+
+	if (sign == -1)
+		output = -result;
+	else
+		output = result;
+
+	return (output);
 }
